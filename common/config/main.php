@@ -5,5 +5,12 @@ return [
         'cache' => [
             'class' => 'yii\caching\FileCache',
         ],
+        'db'    => [
+            'class' => 'yii\db\Connection',
+            'dsn'   => 'mysql:host=localhost,dbname=journal',
+            'username' => 'root',
+            'password' => '',
+            'charset'  => 'utf8',
+        ],
     ],
 ];
