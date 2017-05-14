@@ -1,6 +1,6 @@
 # test
 
-##try yii2
+try yii2
 在线稿件管理
 
 ##1.角色权限
