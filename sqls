@@ -1,9 +1,9 @@
 ----用户
 CREATE TABLE `journal`.`user` (
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键自增' ,
-    `pname` VARCHAR(20) BINARY NOT NULL COMMENT '笔名 不可重复' ,
+    `username` VARCHAR(20) BINARY NOT NULL COMMENT '笔名 不可重复' ,
     `name` VARCHAR(20) BINARY NOT NULL COMMENT '姓名' ,
-    `pwd` VARCHAR(100) BINARY NOT NULL COMMENT '密码' ,
+    `password` VARCHAR(100) BINARY NOT NULL COMMENT '密码' ,
     `address` VARCHAR(150) BINARY NOT NULL COMMENT '地址' ,
     `email` CHAR(20) BINARY NOT NULL COMMENT '邮箱' ,
     `phone` INT(11) UNSIGNED NOT NULL COMMENT '手机号' ,

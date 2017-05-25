@@ -49,7 +49,7 @@ class Essay {
      */
     public function fetchEssayById($id) {
         $sql = "select * from essay where id={$id}";
-        $re = Yii::app()->db->creaetCommand($sql)->queryRow();
+        $re = Yii::app()->db->creaetCommand($sql)->queryOne();
         return $re;
     }
 

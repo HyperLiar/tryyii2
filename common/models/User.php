@@ -172,6 +172,52 @@ class User extends ActiveRecord implements IdentityInterface
     }
 
     /**
-     * @desc 
+     * @desc create new user
+     * @date 2017_05_15
      */
+    public function createNewUser($params) {
+        if (empty($params['created_at'])) {
+            $params['created_at'] = time();
+        }
+        if (empty($params['updated_at'])) {
+            $params['updated_at'] = time();
+        }
+
+        $sql = "insert into user (pname,name,pwd,address,email,phone,type,ctime,utime,is_delete)
+              values ('{$params['pname']}','{$params['name']}','{$params['pwd']}','{$params['address']}',
+              '{$params['email']}','{$params['phone']}','{$params['type']}','{$params['created_at']}',
+              '{$params['updated_at']}','{$params['is_delete']}')";
+        $re = Yii::app()->db->createCommand($sql)->excute;
+        return $re;
+    }
+
+    /**
+     * @desc update user
+     * @date 2017_05_15
+     */
+    public function updateUser($params) {
+        if (empty($params['utime'])) {
+            $params['utime'] = time();
+        }
+
+        $sql = "update user set ";
+
+        foreach ($params as $k => $v) {
+            $sql .= $k."=".$v.",";
+        }
+
+        $sql = rtrim($sql, ",") . "where id = '{$params['id']}'";
+        $re = Yii::app()->db->createCommand($sql)->excute();
+        return $re;
+    }
+
+    /**
+     * @desc select user by id
+     * @date 2017_05_15
+     */
+    public function selectUserById($id) {
+        $sql = "select * from user where id = '{$id}'";
+        $re = Yii::app()->db->createCommand($sql)->selectOne();
+        return $re;
+    }
 }
