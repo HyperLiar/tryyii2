@@ -30,16 +30,14 @@ class User extends ActiveRecord implements IdentityInterface
     /**
      * @inheritdoc
      */
-    public static function tableName()
-    {
+    public static function tableName() {
         return '{{%user}}';
     }
 
     /**
      * @inheritdoc
      */
-    public function behaviors()
-    {
+    public function behaviors() {
         return [
             TimestampBehavior::className(),
         ];
@@ -48,8 +46,7 @@ class User extends ActiveRecord implements IdentityInterface
     /**
      * @inheritdoc
      */
-    public function rules()
-    {
+    public function rules() {
         return [
             ['status', 'default', 'value' => self::STATUS_ACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED]],
@@ -59,16 +56,14 @@ class User extends ActiveRecord implements IdentityInterface
     /**
      * @inheritdoc
      */
-    public static function findIdentity($id)
-    {
+    public static function findIdentity($id) {
         return static::findOne(['id' => $id, 'status' => self::STATUS_ACTIVE]);
     }
 
     /**
      * @inheritdoc
      */
-    public static function findIdentityByAccessToken($token, $type = null)
-    {
+    public static function findIdentityByAccessToken($token, $type = null) {
         throw new NotSupportedException('"findIdentityByAccessToken" is not implemented.');
     }
 
@@ -78,8 +73,7 @@ class User extends ActiveRecord implements IdentityInterface
      * @param string $username
      * @return static|null
      */
-    public static function findByUsername($username)
-    {
+    public static function findByUsername($username) {
         return static::findOne(['username' => $username, 'status' => self::STATUS_ACTIVE]);
     }
 
@@ -89,8 +83,7 @@ class User extends ActiveRecord implements IdentityInterface
      * @param string $token password reset token
      * @return static|null
      */
-    public static function findByPasswordResetToken($token)
-    {
+    public static function findByPasswordResetToken($token) {
         if (!static::isPasswordResetTokenValid($token)) {
             return null;
         }
@@ -107,8 +100,7 @@ class User extends ActiveRecord implements IdentityInterface
      * @param string $token password reset token
      * @return bool
      */
-    public static function isPasswordResetTokenValid($token)
-    {
+    public static function isPasswordResetTokenValid($token) {
         if (empty($token)) {
             return false;
         }
@@ -121,24 +113,21 @@ class User extends ActiveRecord implements IdentityInterface
     /**
      * @inheritdoc
      */
-    public function getId()
-    {
+    public function getId() {
         return $this->getPrimaryKey();
     }
 
     /**
      * @inheritdoc
      */
-    public function getAuthKey()
-    {
+    public function getAuthKey() {
         return $this->auth_key;
     }
 
     /**
      * @inheritdoc
      */
-    public function validateAuthKey($authKey)
-    {
+    public function validateAuthKey($authKey) {
         return $this->getAuthKey() === $authKey;
     }
 
@@ -148,8 +137,7 @@ class User extends ActiveRecord implements IdentityInterface
      * @param string $password password to validate
      * @return bool if password provided is valid for current user
      */
-    public function validatePassword($password)
-    {
+    public function validatePassword($password) {
         return Yii::$app->security->validatePassword($password, $this->password_hash);
     }
 
@@ -158,32 +146,78 @@ class User extends ActiveRecord implements IdentityInterface
      *
      * @param string $password
      */
-    public function setPassword($password)
-    {
+    public function setPassword($password) {
         $this->password_hash = Yii::$app->security->generatePasswordHash($password);
     }
 
     /**
      * Generates "remember me" authentication key
      */
-    public function generateAuthKey()
-    {
+    public function generateAuthKey() {
         $this->auth_key = Yii::$app->security->generateRandomString();
     }
 
     /**
      * Generates new password reset token
      */
-    public function generatePasswordResetToken()
-    {
+    public function generatePasswordResetToken() {
         $this->password_reset_token = Yii::$app->security->generateRandomString() . '_' . time();
     }
 
     /**
      * Removes password reset token
      */
-    public function removePasswordResetToken()
-    {
+    public function removePasswordResetToken() {
         $this->password_reset_token = null;
+    }
+
+    /**
+     * @desc create new user
+     * @date 2017_05_15
+     */
+    public function createNewUser($params) {
+        if (empty($params['created_at'])) {
+            $params['created_at'] = time();
+        }
+        if (empty($params['updated_at'])) {
+            $params['updated_at'] = time();
+        }
+
+        $sql = "insert into user (pname,name,pwd,address,email,phone,type,ctime,utime,is_delete)
+              values ('{$params['pname']}','{$params['name']}','{$params['pwd']}','{$params['address']}',
+              '{$params['email']}','{$params['phone']}','{$params['type']}','{$params['created_at']}',
+              '{$params['updated_at']}','{$params['is_delete']}')";
+        $re = Yii::app()->db->createCommand($sql)->excute;
+        return $re;
+    }
+
+    /**
+     * @desc update user
+     * @date 2017_05_15
+     */
+    public function updateUser($params) {
+        if (empty($params['utime'])) {
+            $params['utime'] = time();
+        }
+
+        $sql = "update user set ";
+
+        foreach ($params as $k => $v) {
+            $sql .= $k."=".$v.",";
+        }
+
+        $sql = rtrim($sql, ",") . "where id = '{$params['id']}'";
+        $re = Yii::app()->db->createCommand($sql)->excute();
+        return $re;
+    }
+
+    /**
+     * @desc select user by id
+     * @date 2017_05_15
+     */
+    public function selectUserById($id) {
+        $sql = "select * from user where id = '{$id}'";
+        $re = Yii::app()->db->createCommand($sql)->selectOne();
+        return $re;
     }
 }
