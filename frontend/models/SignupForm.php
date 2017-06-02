@@ -12,10 +12,10 @@ class SignupForm extends Model
     public $username;
     public $email;
     public $password;
-    public $phone;
-    public $name;
-    public $address;
-    public $type;
+	public $phone;
+	public $name;
+	public $address;
+
 
     /**
      * @inheritdoc
@@ -25,29 +25,27 @@ class SignupForm extends Model
         return [
             ['username', 'trim'],
             ['username', 'required'],
-            ['username', 'unique', 'targetClass' => '\common\models\User', 'message' => '已存在相同的笔名！'],
+            ['username', 'unique', 'targetClass' => '\common\models\User', 'message' => '此用户名已被注册！'],
             ['username', 'string', 'min' => 2, 'max' => 255],
 
             ['email', 'trim'],
             ['email', 'required'],
             ['email', 'email'],
             ['email', 'string', 'max' => 255],
-            ['email', 'unique', 'targetClass' => '\common\models\User', 'message' => '邮箱已经注册过！'],
+            ['email', 'unique', 'targetClass' => '\common\models\User', 'message' => '此邮箱已被注册！'],
 
             ['password', 'required'],
             ['password', 'string', 'min' => 6],
 
-            ['phone', 'trim'],
-            ['phone', 'required'],
-            ['phone', 'unique', 'targetClass' => '\common\models\User', 'message' => '手机号已被注册过！'],
-            ['phone', 'string', 'max' => 13],
+			['phone', 'trim'],
+			['phone', 'required'],
+			['phone', 'string', 'min' => 8, 'max' => 16],
 
-            ['name', 'trim'],
-            ['name', 'required'],
-            ['name', 'string', 'max' => 30],
+			['name', 'trim'],
+			['name', 'required'],
+			['name', 'string', 'min' => 1, 'max' => 20],
 
-            ['address', 'trim'],
-            ['adddress', 'string', 'max' => 300],
+			['address', 'string', 'min' => 0, 'max' => '50'],
         ];
     }
 
@@ -65,13 +63,29 @@ class SignupForm extends Model
         $user = new User();
         $user->username = $this->username;
         $user->email = $this->email;
-        $user->name = $this->name;
-        $user->phone = $this->phone;
-        $user->address = $this->address;
-        $user->type = $this->type;
         $user->setPassword($this->password);
         $user->generateAuthKey();
+		$user->phone = $this->phone;
+		$user->name = $this->name;
+		$user->address = $this->address;
+		$user->created_at = time();
+		$user->updated_at = time();
         
         return $user->save() ? $user : null;
     }
+
+	/**
+	  * add attribute labels
+	  *
+	  */
+	public function attributeLabels() {
+		return [
+			'username'	=> '用户名',
+			'password'	=> '密码',
+			'name'		=> '姓名',
+			'email'		=> '电子邮箱',
+			'phone'		=> '手机号',
+			'address'	=> '地址',
+		];
+	}
 }

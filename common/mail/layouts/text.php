@@ -1,12 +1,10 @@
 <?php
-
 use yii\helpers\Html;
 
-/** @var \yii\web\View $this view component instance */
-/** @var \yii\mail\MessageInterface $message the message being composed */
-/** @var string $content main view render result */
+/* @var $this \yii\web\View view component instance */
+/* @var $message \yii\mail\MessageInterface the message being composed */
+/* @var $content string main view render result */
 ?>
-
 <?php $this->beginPage() ?>
 <?php $this->beginBody() ?>
 <?= $content ?>

@@ -12,9 +12,18 @@ class LoginForm extends Model
     public $username;
     public $password;
     public $rememberMe = true;
-
+	public $phone;
+	public $email;
+	public $name;
+	public $address;
     private $_user;
 
+	public $is_back;
+
+	const ROLE_NORMAL_AUTHOR = 10;
+	const ROLE_NORMAL_EDITOR = 20;
+	const ROLE_EXPERT = 30;
+	const ROLE_CHEIF_EDITOR = 40;
 
     /**
      * @inheritdoc
@@ -43,7 +52,7 @@ class LoginForm extends Model
         if (!$this->hasErrors()) {
             $user = $this->getUser();
             if (!$user || !$user->validatePassword($this->password)) {
-                $this->addError($attribute, 'Incorrect username or password.');
+                $this->addError($attribute, '错误的用户名或密码');
             }
         }
     }
@@ -51,7 +60,7 @@ class LoginForm extends Model
     /**
      * Logs in a user using the provided username and password.
      *
-     * @return bool whether the user is logged in successfully
+     * @return boolean whether the user is logged in successfully
      */
     public function login()
     {
@@ -70,9 +79,28 @@ class LoginForm extends Model
     protected function getUser()
     {
         if ($this->_user === null) {
-            $this->_user = User::findByUsername($this->username);
+			if ($this->is_back == 1) {
+				$this->_user = User::findByUsernameAndRole($this->username,self::ROLE_NORMAL_AUTHOR);
+			} else {
+				$this->_user = User::findByUsername($this->username);
+			}
         }
-
+		
         return $this->_user;
     }
+
+	/**
+	 * set attributes
+	 *
+	 */
+	public function attributeLabels() {
+		return [
+			'username'	=> '用户名',
+			'password'	=> '密码',
+			'name'		=> '姓名',
+			'email'		=> '电子邮箱',
+			'phone'		=> '手机号',
+			'address'	=> '地址',
+		];
+	}
 }
