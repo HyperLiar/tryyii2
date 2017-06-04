@@ -1,15 +1,51 @@
 <?php
+namespace common\models;
+
+use Yii;
+use yii\base\NotSupportedException;
+use yii\behaviors\TimeStampBehavior;
+use yii\db\ActiveRecord;
+use common\models\ConstStatus;
+
 /**
  * Desc: essay model
  * Date: 2017/5/14
  * Time: 19:57
  */
-class Essay {
+class Essay extends ActiveRecord {
+
+	public $title;
+	public $content;
+	public $status = 0;
+	public $uid;
+
+	/**
+	  * @desc rules
+	  *
+	  */
+	public function rules() {
+		return [
+			[['title','content'],'required'],
+		];
+	}
+
+	/**
+	  * @desc attributeLabel
+	  *
+	  */
+	public function attributeLabels() {
+		return [
+			'title'		=> '标题',
+			'content'	=> '内容',
+			'status_message' => '审核状态',
+		];
+	}
+
     /**
      * @desc fetch essay list ranked by status
      * @date 2017_05_14
      */
-    public function fetchEssayListRankByStatus ($start_time, $end_time, $offset=0, $limit=20, $is_delete=0) {
+    public function fetchEssayListRankByStatus ($start_time, $end_time, $status=0) {
         if (empty($start_time)) {
             $start_time = strtotime('-1 week');
         }
@@ -18,9 +54,9 @@ class Essay {
             $end_time = time();
         }
 
-        $sqlWhere = "where ctime>={$start_time} and ctime<={$end_time} and is_delete={$is_delete} order by status desc limit {$offset}, {$limit}";
+        $sqlWhere = "where ctime>={$start_time} and ctime<={$end_time} and status={$status} order by status desc";
         $sql = "select * from essay " . $sqlWhere;
-        $re = Yii::app()->db->createCommand($sql)->queryAll();
+        $re = Yii::$app->db->createCommand($sql)->queryAll();
         return $re;
     }
 
@@ -28,7 +64,7 @@ class Essay {
      * @desc fetch essay list by status
      * @date 2017_05_14
      */
-    public function fetchEssayListByStatus ($status, $start_time, $end_time, $offset=0, $limit=20, $is_delete=0) {
+    public function fetchEssayListByStatus ($status, $start_time, $end_time) {
         if (empty($start_time)) {
             $start_time = strtotime('-1 week');
         }
@@ -37,9 +73,9 @@ class Essay {
             $end_time = time();
         }
 
-        $sqlWhere = "where ctime>={$start_time} and ctime <= {$end_time} and status={$status} and is_delete={$is_delete} limit {$offset}, {$limit}";
+        $sqlWhere = "where ctime>={$start_time} and ctime <= {$end_time} and status={$status}";
         $sql = "select * from essay " . $sqlWhere;
-        $re = Yii::app()->db->createCommand($sql)->queryAll();
+        $re = Yii::$app->db->createCommand($sql)->queryAll();
         return $re;
     }
 
@@ -49,7 +85,7 @@ class Essay {
      */
     public function fetchEssayById($id) {
         $sql = "select * from essay where id={$id}";
-        $re = Yii::app()->db->creaetCommand($sql)->queryOne();
+        $re = Yii::$app->db->createCommand($sql)->queryOne();
         return $re;
     }
 
@@ -57,14 +93,9 @@ class Essay {
      * @desc fetch essay by uid
      * @date 2017_05_14
      */
-    public function fetchEssayByUid($uid, $offset=0, $limit=10,$is_delete=0) {
-        if ($is_delete == -1) {
-            $sqlWhere = "where uid={$uid} limit {$offset}, {$limit}";
-        } else {
-            $sqlWhere = "where uid={$uid} limit {$offset}, {$limit}";
-        }
-        $sql = "select * from essay " . $sqlWhere;
-        $re = Yii::app()->db->createCommand($sql)->queryAll();
+    public function fetchEssayByUid($uid) {
+        $sql = "select * from essay where uid={$uid}";
+        $re = Yii::$app->db->createCommand($sql)->queryAll();
         return $re;
     }
 
@@ -73,31 +104,30 @@ class Essay {
      * @date 2017_05_14
      */
     public function createEssay ($params) {
-        $ctime = time();
-        $sql = "insert into essay (u_id,name,path,extension,status,ctime) values 
-                ('{$params['u_id']}', '{$params['name']}','{$params['path']}','{$params['extension']}',
-                '{$params['status']}','{$ctime}')";
-        $re = Yii::app()->db->createCommanad($sql)->excute();
+		$params['status'] = ConstStatus::ESSAY_STATUS_START;	
+		$params['status_message'] = '等待编辑分发';
+        $ctime = $utime = time();
+        $sql = "insert into essay (uid,title,content,status,ctime,utime) values 
+                ('{$params['uid']}','{$params['title']}','{$params['content']}',
+                '{$params['status']}','{$ctime}','{$utime}')";
+        $re = Yii::$app->db->createCommand($sql)->execute();
 
         return $re;
     }
 
     /**
-     * @desc update status (is_delete) (publish_time) (publish_version) (payment) by id
+     * @desc update status (publish_time) (publish_version) (payment) by id
      * @date 2017_05_14
      */
-    public function updateEssayStatus($id, $status, $is_delete=0, $publish_time=0, $publish_version='',$payment=0) {
+    public function updateEssayStatus($id, $status, $publish_time=0, $publish_version='',$payment=0) {
         $utime = time();
         $sql = "update essay set status='{$status}' and utime='{$utime}'";
         if ($status == ConstStatus::ESSAY_STATUS_SUCCESS) {
             $sql .= "and publish_time = '{$publish_time}' and publish_version = '{$publish_version}' and payment = '{$payment}'";
         }
-        if ($status == ConstStatus::ESSAY_STATUS_FAIL && $is_delete != 0) {
-            $sql .= "and is_delete = '{$is_delete}'";
-        }
         $sql .= "where id = '{$id}'";
 
-        $re = Yii::app()->db->createCommand($sql)->excute();
+        $re = Yii::$app->db->createCommand($sql)->execute();
         return $re;
     }
 }

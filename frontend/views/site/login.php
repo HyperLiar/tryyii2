@@ -11,8 +11,6 @@ $this->title = '登录';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="site-login">
-    <h1><?= Html::encode($this->title) ?></h1>
-
     <p>请填写以下目录登陆系统:</p>
 
     <div class="row">

@@ -7,6 +7,7 @@ use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
+use yii\data\Pagination;
 use common\models\LoginForm;
 use common\models\User;
 use common\models\Essay;
@@ -62,8 +63,34 @@ class SiteController extends Controller
             ],
             'captcha' => [
                 'class' => 'yii\captcha\CaptchaAction',
-                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
-            ],
+			'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
+			],
+			'upload' => [
+				'class' => 'kucha\ueditor\UEditorAction',
+				'config' => [
+					/* 上传文件配置 */
+					"fileActionName"          => "uploadfile",
+					/* controller里,执行上传视频的action名称 */
+					"fileFieldName"           => "upfile",
+					/* 提交的文件表单名称 */
+					"filePathFormat"          => "/upload/file/{yyyy}{mm}{dd}/{time}{rand:6}",
+					/* 上传保存路径,可以自定义保存路径和文件名格式 */
+					"fileUrlPrefix"           => "/upload/prefix/",
+					/* 文件访问路径前缀 */
+					"fileMaxSize"             => 51200000,
+					/* 上传大小限制，单位B，默认50MB */
+					"fileAllowFiles"          => [
+						".doc",
+					".docx",
+					".xls",
+					".xlsx",
+					".ppt",
+					".pptx",
+					".pdf",
+					".txt",
+					],  
+				]   
+			], 
         ];
     }
 
@@ -121,15 +148,90 @@ class SiteController extends Controller
 	 *
 	 */
 	public function actionEssay() {
-		return $this->render('essay');
-	}
+		$essay = new Essay;
+		$essayList = $essay->fetchEssayListRankByStatus(0,0);	
+		$count = count($essayList);
+		$pages = new Pagination(['totalCount' => $count, 'pageSize' => '20']);
+		if ($count > 0) {
+			return $this->render('essay', [
+				'essayList'	=> $essayList,
+				'pages'		=> $pages,
+			]);
+		} else {
+			return $this->render('essay', [
+				'error'		=> '还没有人上传过稿件',
+				'pages'		=> $pages,
+			]);
+		}	}
 
 	/**
-	 * @desc 个人文稿
+	 * @desc 个人文稿-展示
 	 *
 	 */
 	public function actionMyessay() {
-		return $this->render('myessay');
+		$essay = new Essay;
+		$uid = Yii::$app->user->getId();
+		$essayList = $essay->fetchEssayByUid($uid);	
+		$count = count($essayList);
+		$pages = new Pagination(['totalCount' => $count, 'pageSize' => '20']);
+		if ($count > 0) {
+			return $this->render('myessay', [
+				'essayList'	=> $essayList,
+				'pages'		=> $pages,
+			]);
+		} else {
+			return $this->render('myessay', [
+				'error'		=> '您还没有上传过稿件',
+				'pages'		=> $pages,
+			]);
+		}
+	}
+
+	/**
+	  * @desc 个人文稿-添加
+	  *
+	  */
+	public function actionAddmyessay() {
+		$essay = new Essay;
+		if($essay->load(Yii::$app->request->post()) && $essay->validate()){
+			$params = Yii::$app->request->post('Essay');
+			$params['uid'] = Yii::$app->user->getId();
+			//var_dump(iconv('utf-8','cp936', $params['title']));die();
+			$add = $essay->createEssay($params);
+			if ($add) {
+				Yii::$app->session->setFlash('success','文章添加成功');
+				$url = "http://localhost/essayonline/frontend/web/site/myessay";
+				return $this->redirect($url, 302);
+			} else {
+				Yii::$app->session->setFlash('error','文章添加失败');
+				return $this->render('addmyessay', [
+						'essay' => $essay,
+				]);
+			}
+		}
+
+		return $this->render('addmyessay',[
+				'essay'=>$essay,
+		]);
+	}
+
+	/**
+	  * @desc 个人文稿 详情
+	  *
+	  */
+	public function actionInfomyessay() {
+		$essay = new Essay;
+		$id = Yii::$app->request->get('id');
+		$info = $essay->fetchEssayById($id);
+		if (!empty($info)) {
+			return $this->render('infomyessay', [
+				'essay'	=> $info,
+			]);
+		} else {
+			return $this->render('infomyessay', [
+				'error'	=> '获取失败',
+			]);
+		}
 	}
 
 	/**
@@ -137,7 +239,45 @@ class SiteController extends Controller
 	 *
 	 */
 	public function actionMydata() {
-		return $this->render('mydata');
+		$user = new User;
+		$id = Yii::$app->user->getId();
+		$info = $user->selectUserById($id);
+		if (empty($info['address'])) {
+			$info['address'] = '未填写';
+		}
+		return $this->render('mydata',[
+			'info'		=> $info,
+		]);
+	}
+
+	/**
+	  * @desc 修改资料
+	  *
+	  */
+	public function actionUpdatemydata() {
+		$user = new User;
+		$id = Yii::$app->user->getId();
+		$updateParams = Yii::$app->request->post('User');
+		$updateParams['id'] = $id;
+		if (!empty($updateParams)) {
+			$updateResult = $user->updateUser($updateParams);
+			if ($updateResult) {
+				Yii::$app->session->setFlash('success','更新成功');
+				$url = "http://localhost/essayonline/frontend/web/site/mydata";
+				return $this->redirect($url, 302);
+			} else {
+				Yii::$app->session->setFlash('error','更新失败，请重试');
+			}
+		}
+
+		$info = $user->selectUserById($id);
+		if (empty($info['address'])) {
+			$info['address'] = '未填写';
+		}
+		return $this->render('updatemydata',[
+				'user'		=> $user,
+				'info'		=> $info,
+		]);
 	}
 
     /**
@@ -197,7 +337,7 @@ class SiteController extends Controller
         }
 
         if ($model->load(Yii::$app->request->post()) && $model->validate() && $model->resetPassword()) {
-            Yii::$app->session->setFlash('success', 'New password was saved.');
+            Yii::$app->session->setFlash('success', '新密码设置成功');
 
             return $this->goHome();
         }
@@ -206,4 +346,5 @@ class SiteController extends Controller
             'model' => $model,
         ]);
     }
+
 }

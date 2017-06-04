@@ -1,4 +1,6 @@
 <?php
+namespace common\models;
+
 /**
  * Desc: review record
  * Date: 2017/5/14
@@ -15,7 +17,7 @@ class Review {
               ('{$params['u_id']}','{$params['e_id']}','{$params['start_status']}','{$params['end_status']}',
               '{$params['ctime']}','{$params['comment']}')";
 
-        $re = Yii::app()->db->createCommnad($sql)->excute();
+        $re = Yii::app()->db->createCommnad($sql)->execute();
         return $re;
     }
 

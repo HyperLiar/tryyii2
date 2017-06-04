@@ -20,9 +20,8 @@ CREATE TABLE `journal`.`user` (
 CREATE TABLE `journal`.`essay` (
 		`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键自增' ,
 		`u_id` INT(11) UNSIGNED NOT NULL COMMENT '用户id' ,
-		`name` VARCHAR(100) BINARY NOT NULL COMMENT '文章名称' ,
-		`path` VARCHAR(100) BINARY NOT NULL COMMENT '存储路径' ,
-		`extension` CHAR(4) NOT NULL COMMENT '文件拓展名' ,
+		`title` VARCHAR(100) BINARY NOT NULL COMMENT '文章标题' ,
+		`content` TEXT BINARY NOT NULL COMMENT '文章内容' ,
 		`publish_version` VARCHAR(20) BINARY NULL COMMENT '出版期刊' ,
 		`publish_time` DATETIME NULL COMMENT '最后提交时间' ,
 		`payment` INT(11) NULL DEFAULT NULL COMMENT '稿费' ,
