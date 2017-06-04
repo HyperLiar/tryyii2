@@ -235,36 +235,18 @@ class SiteController extends Controller
 	}
 
 	/**
-	 * @desc 个人资料
-	 *
-	 */
-	public function actionMydata() {
-		$user = new User;
-		$id = Yii::$app->user->getId();
-		$info = $user->selectUserById($id);
-		if (empty($info['address'])) {
-			$info['address'] = '未填写';
-		}
-		return $this->render('mydata',[
-			'info'		=> $info,
-		]);
-	}
-
-	/**
 	  * @desc 修改资料
 	  *
 	  */
-	public function actionUpdatemydata() {
+	public function actionMydata() {
 		$user = new User;
 		$id = Yii::$app->user->getId();
 		$updateParams = Yii::$app->request->post('User');
-		$updateParams['id'] = $id;
 		if (!empty($updateParams)) {
+			$updateParams['id'] = $id;
 			$updateResult = $user->updateUser($updateParams);
 			if ($updateResult) {
 				Yii::$app->session->setFlash('success','更新成功');
-				$url = "http://localhost/essayonline/frontend/web/site/mydata";
-				return $this->redirect($url, 302);
 			} else {
 				Yii::$app->session->setFlash('error','更新失败，请重试');
 			}
@@ -274,7 +256,7 @@ class SiteController extends Controller
 		if (empty($info['address'])) {
 			$info['address'] = '未填写';
 		}
-		return $this->render('updatemydata',[
+		return $this->render('mydata',[
 				'user'		=> $user,
 				'info'		=> $info,
 		]);

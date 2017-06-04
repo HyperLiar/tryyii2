@@ -21,28 +21,28 @@ class SiteController extends Controller
      * @inheritdoc
      */
     public function behaviors()
-    {
-        return [
-            'access' => [
-                'class' => AccessControl::className(),
-                'rules' => [
-                    [
-                        'actions' => ['login', 'error'],
-                        'allow' => true,
-                    ],
-                    [
-                        'actions' => ['logout', 'index'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'logout' => ['post'],
-                ],
-            ],
+	{
+		return [
+			'access' => [
+				'class' => AccessControl::className(),
+				'rules' => [
+					[   
+						'actions' => ['login', 'error'],
+						'allow' => true,
+					],  
+					[   
+						'actions' => ['logout', 'index','statusessay','infoessay','userlist','hisdata','mydata'],
+						'allow' => true,
+						'roles' => ['@'],
+					],  
+				],  
+			],  
+			'verbs' => [
+				'class' => VerbFilter::className(),
+				'actions' => [
+					'logout' => ['post'],
+				],
+			],
         ];
     }
 
@@ -107,20 +107,23 @@ class SiteController extends Controller
 	  */
 	public function actionStatusessay() {
 		$essay = new Essay;
-		$params = Yii::$app->getRequest->post('params');
-
-		$essayList = $essay->fetchEssayListByStatus($params);
+		$params = Yii::$app->request->post('Essay');
+		$status = empty($params['status']) ? 0 : $params['status'];
+		$essay->status = $status;
+		$essayList = $essay->fetchEssayListByStatus($status,0,0);
 		$count = count($essayList);
 		$pages = new Pagination(['totalCount' => $count, 'pageSize' => '20']);
 		if ($count <= 0) {
 			return $this->render('statusessay',[
 					'error' => '无待操作的文稿',
 					'pages' => $pages,
+					'essay'=> $essay,
 			]);	
 		} else {
 			return $this->render('statusessay', [
 				'essayList'	=> $essayList,
 				'pages'		=> $pages,
+				'essay'		=> $essay,
 			]);
 		}
 	}
@@ -131,25 +134,27 @@ class SiteController extends Controller
 	  */
 	public function actionInfoessay() {
 		$essay = new Essay;
-		$id = Yii::$app->getRequest->get('id');
+		$id = Yii::$app->request->get('id');
 		$essayInfo = $essay->fetchEssayById($id);
 
-		$params = Yii::$app->getRequest->post('params');
-		if ($params['status'] != $essayInfo['status']) {
+		$params = Yii::$app->request->post('Essay');
+		if (isset($params['status'])) {
+			if ($params['status'] - $essayInfo['status'] != 0) {
 			$publish_time = empty($params['publish_time']) ? 0 : $params['publish_time'];
 			$publish_ver  = empty($params['publish_ver']) ? '' : $params['publish_ver'];
 			$payment = empty($params['payment']) ? '' : $params['payment'];
 			$update = $essay->updateEssayStatus($id, $params['status'],$publish_time,$publish_ver,$payment);
-
+			}
 			if ($update) {
 				Yii::$app->session->setFlash('success', '更新成功');
 				$essayInfo = $essay->fetchEssayById($id);
-				$this->render('infomyessay',['essay' => $essay, 'info' => $essayInfo]);
-			} else (
+				$this->render('infoessay',['essay' => $essay, 'info' => $essayInfo]);
+			} else {
 				Yii::$app->session->setFlash('error', '更新失败');		
-			)
+				$this->render('infoessay',['essay' => $essay, 'info' => $essayInfo]);
+			}
 		} else {
-			$this->render('infomyessay', ['essay' => $essay, 'info'	=> $essayInfo]);
+			$this->render('infoessay', ['essay' => $essay, 'info' => $essayInfo]);
 		}
 	}
 
@@ -161,7 +166,7 @@ class SiteController extends Controller
 		$user = new User;
 		$userList = $user->fetchUserList();
 		$count = count($userList);
-		$pages = new Pagination('totalCount' => $count, 'pageSize' => 20);
+		$pages = new Pagination(['totalCount' => $count, 'pageSize' => 20]);
 
 		if ($count > 0) {
 			return $this->render('userlist', [
@@ -183,16 +188,17 @@ class SiteController extends Controller
 	public function actionHisdata () {
 		$user = new User;
 		$essay = new Essay;
-		$id = Yii::$app->user->getId();
+		$id = Yii::$app->request->get('id');
 		$userInfo = $user->fetchUserById($id);	
 		$essayList = $user->fetchEssayByUid($uid);
 		$count = count($essayList);
-		$pages = new Pagination('totalCount' => $count, 'pageSize' => 20);
+		$pages = new Pagination(['totalCount' => $count, 'pageSize' => 20]);
 
-		$params = Yii::$app->getRequest->post('params');
+		$params = Yii::$app->request->post('User');
 		if ($params['role'] != $userInfo['role'] || $params['status'] != $userInfo['status']) {
 			$params['id'] = $id;
 			$updateUser = $user->updateUser($params);
+			$userInfo = $user->fetchUserById($id);
 			if ($updateUser) {
 				Yii::$app->session->setFlash('success', '更新成功');
 			} else {
@@ -217,4 +223,33 @@ class SiteController extends Controller
 		 }
 	}
 
+	/**
+	  * @desc my data
+	  *
+	  */
+	public function actionMydata() {
+		$user = new User;
+		$id = Yii::$app->user->getId();
+		$userInfo = $user->fetchUserById($id);
+		$params = Yii::$app->request()->post('User');
+		if ($params['phone']!=$userInfo['phone'] || $params['email'] != $userInfo['email']
+			|| $params['address']!=$userInfo['address']) {
+			$params['id'] = $id;
+			$updateUser = $user->updateUser($params);
+			if ($updateUser) {
+				Yii::$app->session->setFlash('success', '更新成功');
+				$userInfo = $user->fetchUserById($id);
+				return $this->render('mydata',[
+					'userInfo'	=> $userInfo,
+					'user'		=> $user,
+				]);
+			} else {
+				Yii::$app->session->setFlash('error', '更新失败');
+			}
+		}
+		return $this->render('mydata', [
+			'userInfo'		=> $userInfo,
+			'user'			=> $user,
+		]);
+	}
 }

@@ -25,13 +25,13 @@ class User extends ActiveRecord implements IdentityInterface
 {
 	const STATUS_DELETED = 0;
 	const STATUS_ACTIVE = 10;
-
+/*
 	public $phone;
 	public $email;
 	public $address;
 	public $status;
 	public $status_message;
-
+*/
 	/**
 	 * @inheritdoc
 	 */
@@ -69,9 +69,6 @@ class User extends ActiveRecord implements IdentityInterface
 			['email', 'string', 'max' => 255],
 			['email', 'unique', 'targetClass' => '\common\models\User', 'message' => '此邮箱已被注册！'],
 
-			['password', 'required'],
-			['password', 'string', 'min' => 6], 
-
 			['phone', 'trim'],
 			['phone', 'required'],
 			['phone', 'string', 'min' => 8, 'max' => 16],
@@ -91,7 +88,6 @@ class User extends ActiveRecord implements IdentityInterface
 	public function attributeLabels() {
 		return [
 			'username'  => '用户名',
-			'password'  => '密码',
 			'name'      => '姓名',
 			'email'     => '电子邮箱',
 			'phone'     => '手机号',
