@@ -110,7 +110,17 @@ class SiteController extends Controller
 		$params = Yii::$app->request->post('Essay');
 		$status = empty($params['status']) ? 0 : $params['status'];
 		$essay->status = $status;
-		$essayList = $essay->fetchEssayListByStatus($status,0,0);
+
+		$role = Yii::$app->user->identity->role;
+		if ($role == 30) {
+			$pro = Yii::$app->user->identity->pro;
+			$essayList = $essay->fetchEssayByProAndStatus($pro);
+		} else if ($role == 20) {
+			$status = 0;
+			$essayList = $essay->fetchEssayListByStatus($status,0,0);
+		} else {
+			$essayList = $essay->fetchEssayListByStatus($status,0,0);
+		}
 		$count = count($essayList);
 		$pages = new Pagination(['totalCount' => $count, 'pageSize' => '20']);
 		if ($count <= 0) {
@@ -134,27 +144,51 @@ class SiteController extends Controller
 	  */
 	public function actionInfoessay() {
 		$essay = new Essay;
+		$review = new Review;
+		$user = new User;
 		$id = Yii::$app->request->get('id');
 		$essayInfo = $essay->fetchEssayById($id);
-
+		$role = Yii::$app->user->identity->role;
 		$params = Yii::$app->request->post('Essay');
+
+		$proList = array();
+		if($role == 20) {
+			$pro = empty($params['pro']) ? '1' : $params['pro'];
+			$proList = $user->fetchUserByPro();
+		} else if ($role == 30){
+			$params['status'] = 2;
+		}
+
+
 		if (isset($params['status'])) {
 			if ($params['status'] - $essayInfo['status'] != 0) {
 			$publish_time = empty($params['publish_time']) ? 0 : $params['publish_time'];
 			$publish_ver  = empty($params['publish_ver']) ? '' : $params['publish_ver'];
 			$payment = empty($params['payment']) ? '' : $params['payment'];
 			$update = $essay->updateEssayStatus($id, $params['status'],$publish_time,$publish_ver,$payment);
+			$reviewParams = array(
+				'u_id'	=> Yii::$app->user->getId(),
+				'e_id'	=> $id,
+				'start_status'	=> $essayInfo['status'],
+				'end_status'	=> $params['status'],
+				'comment'		=> empty($params['comment']) ? '无审批意见' : $params['comment'],
+				'username'		=> Yii::$app->user->identity->username,
+			);
+			$createReview = $review->createReview($reviewParams);
 			}
+
+			$rev = $review->fetchReviewByUid(array('e_id' => $id));
 			if ($update) {
 				Yii::$app->session->setFlash('success', '更新成功');
 				$essayInfo = $essay->fetchEssayById($id);
-				$this->render('infoessay',['essay' => $essay, 'info' => $essayInfo]);
+				return $this->render('infoessay',['essay' => $essay, 'essayInfo' => $essayInfo, 'rev' => $review, 'proList' => $proList]);
 			} else {
 				Yii::$app->session->setFlash('error', '更新失败');		
-				$this->render('infoessay',['essay' => $essay, 'info' => $essayInfo]);
+				return $this->render('infoessay',['essay' => $essay, 'essayInfo' => $essayInfo, 'rev' => $review, 'proList' => $proList]);
 			}
 		} else {
-			$this->render('infoessay', ['essay' => $essay, 'info' => $essayInfo]);
+			$rev = $review->fetchReviewByUid(array('e_id' => $id));
+			return $this->render('infoessay', ['essay' => $essay, 'essayInfo' => $essayInfo, 'rev' => $review, 'proList' => $proList]);
 		}
 	}
 
@@ -174,7 +208,7 @@ class SiteController extends Controller
 				'pages'		=> $pages,
 			]);
 		} else {
-			return $this->render('userList', [
+			return $this->render('userlist', [
 				'error'	=> '未找到用户',
 				'pages'	=> $pages,
 			]);
@@ -189,16 +223,16 @@ class SiteController extends Controller
 		$user = new User;
 		$essay = new Essay;
 		$id = Yii::$app->request->get('id');
-		$userInfo = $user->fetchUserById($id);	
-		$essayList = $user->fetchEssayByUid($uid);
+		$userInfo = $user->selectUserById($id);	
+		$essayList = $essay->fetchEssayByUid($id);
 		$count = count($essayList);
 		$pages = new Pagination(['totalCount' => $count, 'pageSize' => 20]);
 
 		$params = Yii::$app->request->post('User');
-		if ($params['role'] != $userInfo['role'] || $params['status'] != $userInfo['status']) {
+		if (!empty($params) && $params['role'] != $userInfo['role']) {
 			$params['id'] = $id;
 			$updateUser = $user->updateUser($params);
-			$userInfo = $user->fetchUserById($id);
+			$userInfo = $user->selectUserById($id);
 			if ($updateUser) {
 				Yii::$app->session->setFlash('success', '更新成功');
 			} else {
@@ -230,21 +264,23 @@ class SiteController extends Controller
 	public function actionMydata() {
 		$user = new User;
 		$id = Yii::$app->user->getId();
-		$userInfo = $user->fetchUserById($id);
-		$params = Yii::$app->request()->post('User');
-		if ($params['phone']!=$userInfo['phone'] || $params['email'] != $userInfo['email']
-			|| $params['address']!=$userInfo['address']) {
-			$params['id'] = $id;
-			$updateUser = $user->updateUser($params);
-			if ($updateUser) {
-				Yii::$app->session->setFlash('success', '更新成功');
-				$userInfo = $user->fetchUserById($id);
-				return $this->render('mydata',[
-					'userInfo'	=> $userInfo,
-					'user'		=> $user,
-				]);
-			} else {
-				Yii::$app->session->setFlash('error', '更新失败');
+		$userInfo = $user->selectUserById($id);
+		$params = Yii::$app->request->post('User');
+		if (!empty($params)) {
+			if ($params['phone']!=$userInfo['phone'] || $params['email'] != $userInfo['email']
+				|| $params['address']!=$userInfo['address']) {
+				$params['id'] = $id;
+				$updateUser = $user->updateUser($params);
+				if ($updateUser) {
+					Yii::$app->session->setFlash('success', '更新成功');
+					$userInfo = $user->selectUserById($id);
+					return $this->render('mydata',[
+						'userInfo'	=> $userInfo,
+						'user'		=> $user,
+					]);
+				} else {
+					Yii::$app->session->setFlash('error', '更新失败');
+				}
 			}
 		}
 		return $this->render('mydata', [

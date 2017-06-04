@@ -221,15 +221,19 @@ class SiteController extends Controller
 	  */
 	public function actionInfomyessay() {
 		$essay = new Essay;
+		$review = new Review;
 		$id = Yii::$app->request->get('id');
 		$info = $essay->fetchEssayById($id);
+		$rev = $review->fetchReviewByUid(array('e_id' => $id));
 		if (!empty($info)) {
 			return $this->render('infomyessay', [
 				'essay'	=> $info,
+				'rev'=> $rev,
 			]);
 		} else {
 			return $this->render('infomyessay', [
 				'error'	=> '获取失败',
+				'rev'	=> $rev,
 			]);
 		}
 	}

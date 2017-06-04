@@ -18,6 +18,10 @@ class Essay extends ActiveRecord {
 	public $content;
 	public $status = 0;
 	public $uid;
+	public $publish_time;
+	public $publish_ver;
+	public $payment;
+	public $pro;
 
 	/**
 	  * @desc rules
@@ -99,6 +103,12 @@ class Essay extends ActiveRecord {
         return $re;
     }
 
+	public function fetchEssayByProAndStatus($pro,$status=1) {
+		$sql = "select * from essay where pro={$pro} and status={$status}";
+		$re = Yii::$app->db->createCommand($sql)->queryAll();
+		return $re;
+	}
+
     /**
      * @desc create essay
      * @date 2017_05_14
@@ -107,9 +117,9 @@ class Essay extends ActiveRecord {
 		$params['status'] = ConstStatus::ESSAY_STATUS_START;	
 		$params['status_message'] = '等待编辑分发';
         $ctime = $utime = time();
-        $sql = "insert into essay (uid,title,content,status,ctime,utime) values 
+        $sql = "insert into essay (uid,title,content,status,ctime,utime,status_message,pro) values 
                 ('{$params['uid']}','{$params['title']}','{$params['content']}',
-                '{$params['status']}','{$ctime}','{$utime}')";
+                '{$params['status']}','{$ctime}','{$utime}','{$params['status_message']}','{$params['pro']}')";
         $re = Yii::$app->db->createCommand($sql)->execute();
 
         return $re;

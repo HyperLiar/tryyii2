@@ -25,6 +25,13 @@ class User extends ActiveRecord implements IdentityInterface
 {
 	const STATUS_DELETED = 0;
 	const STATUS_ACTIVE = 10;
+
+	public $t_phone;
+	public $t_email;
+	public $t_address;
+	public $t_status;
+	public $t_status_message;
+	
 /*
 	public $phone;
 	public $email;
@@ -297,6 +304,22 @@ class User extends ActiveRecord implements IdentityInterface
 	public function fetchUserList() {
 		$sql = "select * from user order by id asc";
 		$re = Yii::$app->db->createCommand($sql)->queryAll();
+		return $re;
+	}
+
+
+	/**
+	  * @desc select user pro
+	  *
+	  */
+	public function fetchUserByPro($pro) {
+		$sql = "select * from user where pro = '{$pro}' and role=30";
+		$re = Yii::$app->db->createCommand($sql)->queryAll();
+		if (empty($re)) {
+			$sql = "select * from user where role=30 limit 0,10";
+			$re = Yii::$app->db->createCommand($sql)->queryAll();
+		}
+
 		return $re;
 	}
 }

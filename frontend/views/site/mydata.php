@@ -17,6 +17,7 @@ $this->params['breadcrumbs'][] = $this->title;
 		<ul>
 			<label>用户名</label>:<?= Html::textInput('username',$info['username'], ['class' => 'form-control', 'readonly' => 'readonly']) ?>
 			<label>真实姓名</label>:<?= Html::textInput('name',$info['name'], ['class' => 'form-control', 'readonly' => 'readonly']) ?>
+			<label>专业</label>:<?= Html::textInput('name',$info['pro'], ['class' => 'form-control', 'readonly' => 'readonly']) ?>
 			<?= $form->field($user,'phone',[
 				'inputOptions'	=> [
 					'value'		=> $info['phone'],

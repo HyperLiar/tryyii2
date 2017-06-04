@@ -1,23 +1,28 @@
 <?php
 namespace common\models;
+use Yii;
+use yii\base\NotSupportedException;
+use yii\behaviors\TimeStampBehavior;
+use yii\db\ActiveRecord;
+use common\models\ConstStatus;
 
 /**
  * Desc: review record
  * Date: 2017/5/14
  * Time: 22:54
  */
-class Review {
+class Review extends ActiveRecord {
     /**
      * @desc add review record
      * @date 2017_05_14
      */
     public function createReview($params) {
         $params['ctime'] = time();
-        $sql = "insert into review (u_id, e_id, start_status, end_status, ctime, comment) VALUES 
+        $sql = "insert into review (u_id, e_id, start_status, end_status, ctime, comment,username) VALUES 
               ('{$params['u_id']}','{$params['e_id']}','{$params['start_status']}','{$params['end_status']}',
-              '{$params['ctime']}','{$params['comment']}')";
+              '{$params['ctime']}','{$params['comment']}','{$params['username']}')";
 
-        $re = Yii::app()->db->createCommnad($sql)->execute();
+        $re = Yii::$app->db->createCommnad($sql)->execute();
         return $re;
     }
 
@@ -26,7 +31,7 @@ class Review {
      * @date 2017_05_14
      */
     public function fetchReviewByUid($params) {
-        $sql = "select * from review ";
+        $sql = "select * from review where ";
         $sqlWhere = '';
         if (isset($params['u_id'])) {
             $sqlWhere .= "u_id = {$params['u_id']}";
@@ -36,12 +41,8 @@ class Review {
             $sqlWhere .= "e_id = {$params['e_id']}";
         }
 
-        if (isset($params['offset'])) {
-            $sqlWhere .= "limit {$params['offset']}, {$params['limit']}";
-        }
-
         $sql .= $sqlWhere;
-        $re = Yii::app()->db->createCommand($sql)->queryAll();
+        $re = Yii::$app->db->createCommand($sql)->queryAll();
         return $re;
     }
 

@@ -10,18 +10,28 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="site-myessay">
     <h3>您过去的投稿:</h3>
-	<?php if($error != null) {?>
+	<?php if(!empty($error)) {?>
 			<h4><?= Html::encode($error) ?></h4>
-	<?php } else {
+	<?php } else { ?>
+	<table class="table table-boarded table-striped">
+		<thead><tr>
+		<td>标题</td>
+		<td>专业类别</td>
+		<td>创建时间</td>
+		<td>审核状态</td>
+		</tr></thead><tbody>
+		<?php
 			foreach ($essayList as $essay) {
 				$url = "http://localhost/essayonline/frontend/web/site/infomyessay?id=".$essay['id'];
 				?>
-				<li>
-					<div class="page-header"><a href="<?php echo $url ?>"><?= $essay['title']; ?></a></div>
-					<div class="content"><?= Date('Y-m-d H:i:s', $essay['ctime']); ?></div>
-					<div class="content"><?= $essay['status_message']; ?></div>
-				</li>
+				<tr>
+					<td><a href="<?php echo $url ?>"><?= $essay['title']; ?></a></td>
+					<td>类别</td>
+					<td><?= Date('Y-m-d H:i:s', $essay['ctime']); ?></td>
+					<td><?= $essay['status_message']; ?></td>
+				</tr>
 			<?php } ?>
+			</tbody></table>
 			<?= LinkPager::widget([
 					'pagination'	=> $pages,
 					'prevPageLabel' => '上一页',
